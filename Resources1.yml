@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: creating resources in aws for fun in yaml language using cloudformation 
+
+Resources: 
+  dinhovpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.2/16
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: MyVPC
+
+  subnetpub:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1a
+      VpcId: Ref dinhovpc
+      CidrBlock: 10.0.1.0/24
+      Tags:
+        - Key: Name
+          Value: pubsubnet1
+
+  subnetpriv:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1a
+      VpcId: vpc-id !Ref dinhovpc
+      CidrBlock: 10.0.2.0/24
+      Tags:
+        - Key: Name
+          Value: privsubnet1
+
+  instancesecGroupName:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: dinho-sg
+      GroupDescription: allows http and ssh to instance
+      VpcId: vpc-id !Ref dinhovpc
+      SecurityGroupIngress: 
+        - IpProtocol: tcp
+          FromPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          CidrIp: 0.0.0.0/0   
+
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          CidrIp: 0.0.0.0/0  
+      Tags:
+        - Key: Name
+          Value: dinho-sg
+
+  myEC2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: linux-keypair
+      ImageId: ami-00c39f71452c08778
+      InstanceType: t2.micro
+      BlockDeviceMappings:
+      -
+       DeviceName: /dev/xvda
+       Ebs:
+        VolumeType: gp2
+        DeleteOnTermination: true
+        VolumeSize: 10
+      SecurityGroupIds:
+        - sg-id !Ref instancesecGroupName
+      UserData: 
+        #!/bin/bash 
+        sudo su
+        yum update -y
+        yum install httpd -y
+        systemctl start httpd
+        systemctl enable httpd 
+        echo "emidinho did this from cloudformation" >> /var/www/html/index.html
+
+      Tags:
+        - Key: CreatedBy
+          Value: emidinho
+
+  mybuc:
+    Type: 'AWS::S3::Bucket'
+    Properties: 
+      AccessControl: Private 
+      BucketName: emi-bucbuc
+      Tags:
+        - Key: Name
+          Value: emi-bucbuc
+                          

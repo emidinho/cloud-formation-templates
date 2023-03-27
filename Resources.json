@@ -1,0 +1,75 @@
+{
+"AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "creating resources in aws for fun in json language using cloudformation",
+    "Resources": {
+        
+        "emivpc": {
+          "Type": "AWS::EC2::VPC",
+          "Properties": {
+            "CidrBlock": "10.0.0.0/16",
+            "Tags": [
+            { "Key": "Name", "Value":  "Grp-10-vpc" }
+            ]
+          }
+        },
+        
+        "subnet1": {
+          "Type": "AWS::EC2::Subnet",
+          "Properties": {
+            "AvailabilityZone": "us-east-1a",
+            "VpcId": 
+            { "Ref": "emivpc" }
+            ,
+            "CidrBlock": "10.0.1.0/24",
+            "Tags":[
+            { "Key": "Name", "Value":  "pubsubnet1" }
+            ]
+          }
+        },
+        
+        "subnet2": {
+          "Type": "AWS::EC2::Subnet",
+          "Properties": {
+            "AvailabilityZone": "us-east-1a",
+            "VpcId": 
+            { "Ref": "emivpc" }
+            ,
+            "CidrBlock": "10.0.2.0/24",
+            "Tags":[
+            { "Key": "Name", "Value":  "privsubnet1" }
+            ]
+          }
+        },
+        
+        "emisg" : {
+          "Type" : "AWS::EC2::SecurityGroup",
+          "Properties" : {
+            "GroupDescription" : "-",
+            "SecurityGroupIngress" : [
+                "security Group Rule",
+                {
+                   "IpProtocol": "tcp" 
+                },
+                {
+                    "FromPort": "22,80"
+                },
+                {
+                    "CidrIp": "0.0.0.0/0"
+                }
+            ],
+            "VpcId" : 
+            { "Ref": "emivpc" }
+            ,
+            "Tags":[
+            { "Key": "Name", "Value":  "emi-sg" }
+            ]
+          }
+        }
+        
+        
+        
+    },
+    "Outputs": {
+
+    }
+}
