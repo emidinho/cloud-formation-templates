@@ -20,7 +20,7 @@
             "VpcId": 
             { "Ref": "emivpc" }
             ,
-            "CidrBlock": "10.0.1.0/24",
+            "CidrBlock": "10.1.1.0/24",
             "Tags":[
             { "Key": "Name", "Value":  "pubsubnet1" }
             ]
@@ -34,7 +34,7 @@
             "VpcId": 
             { "Ref": "emivpc" }
             ,
-            "CidrBlock": "10.0.2.0/24",
+            "CidrBlock": "10.1.2.0/24",
             "Tags":[
             { "Key": "Name", "Value":  "privsubnet1" }
             ]
