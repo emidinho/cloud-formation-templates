@@ -1,22 +1,50 @@
 {
 "AWSTemplateFormatVersion": "2010-09-09",
     "Description": "",
-    "Metadata": {
-
-    },
-    "Parameters": {
     
+    "Parameters": {
+      "AZ": {
+        "Description" : "list of existing Availability Zones in this region",
+        "Type" : "AWS::EC2::AvailabilityZone::Name"
+      },
+      "VPC": {
+        "Description" : "list of existing Availability Zones in this region",
+        "Type" : "AWS::EC2::VPC::Id"
+      }
     },
-    "Mappings": {
-
-    },
-    "Conditions": {
-
-    },
+    
     "Resources": {
-
-    },
-    "Outputs": {
-
+        "subnet1": {
+          "Type": "AWS::EC2::Subnet",
+          "Properties": {
+            "AvailabilityZone": 
+            { "Ref": "AZ" }
+            ,
+            "VpcId": 
+            { "Ref": "VPC" }
+            ,
+            "CidrBlock": "172.31.31.172/24",
+            "Tags":[
+            { "Key": "Name", "Value":  "pubsubnet1" }
+            ]
+          }
+        },
+        
+        "subnet2": {
+          "Type": "AWS::EC2::Subnet",
+          "Properties": {
+            "AvailabilityZone": 
+            { "Ref": "AZ" }
+            ,
+            "VpcId": 
+            { "Ref": "VPC" }
+            ,
+            "CidrBlock": "172.31.32.173/24",
+            "Tags":[
+            { "Key": "Name", "Value":  "privsubnet1" }
+            ]
+          }
+        } 
     }
+    
 }

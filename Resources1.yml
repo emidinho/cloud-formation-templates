@@ -2,10 +2,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: creating resources in aws for fun in yaml language using cloudformation 
 
 Parameters:
-  AZ: 
-    Description: list of existing Availability Zones in this region
-    Type: AWS::EC2::AvailabilityZone::Name
-
   VPC:
     Description: list of existing VPCs in this region
     Type: AWS::EC2::VPC::Id
@@ -79,36 +75,10 @@ Parameters:
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
 
 Resources: 
-  subnetpub:
-    Type: AWS::EC2::Subnet
-    Properties:
-      AvailabilityZone: 
-        Ref: AZ
-      VpcId: 
-        Ref: VPC
-      CidrBlock: 172.31.1.0/19
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: pubsubnet1
-
-  subnetpriv:
-    Type: AWS::EC2::Subnet
-    Properties:
-      AvailabilityZone: 
-        Ref: AZ
-      VpcId: 
-        Ref: VPC
-      CidrBlock: 172.31.2.0/18
-      MapPublicIpOnLaunch: false
-      Tags:
-        - Key: Name
-          Value: privsubnet1
-
   InstanceSecGroupName:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: dinho-sg
+      GroupName: WebInstance-sg
       GroupDescription: allows http and ssh to instance
       VpcId:
         Ref: VPC
