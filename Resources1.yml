@@ -79,7 +79,7 @@ Resources:
         DeleteOnTermination: true
         VolumeSize: 10
       SecurityGroupIds:
-        - Ref: instancesecGroupName
+        - Ref: InstanceSecGroupName
       SubnetId: 
         Ref: subnetpub
       UserData: 
