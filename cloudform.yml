@@ -35,3 +35,88 @@ Resources:
           Value: EmiSubnet1private
       VpcId: 
         Ref: myvpc 
+
+  mysg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allows SSH, HTTP & HTTPS to host instance" 
+      GroupName: "webserver-sg"
+      SecurityGroupIngress: 
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags: 
+        - Key: Name
+          Value: cf-instance-sg
+      VpcId: 
+        Ref: myvpc
+
+  myec2:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: "us-east-1a"
+      BlockDeviceMappings:
+        -
+          DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            DeleteOnTermination: true
+            VolumeSize: 10
+      DisableApiTermination: false
+      EbsOptimized: false
+      IamInstanceProfile: "EC2-AmazonS3ReadOnlyAccess"
+      ImageId: "ami-00c39f71452c08778"
+      InstanceType: "t2.micro"
+      KeyName: "linux-keypair"
+      SecurityGroupIds: 
+        - Ref: mysg
+      SubnetId: 
+        Ref: mysubnet
+      Tags: 
+        - Key: Name
+          Value: Emidinho-WebServer
+        - Key: CreatedBy
+          Value: Emidinho
+      Tenancy: "default"
+      UserData: 
+        Fn::Base64:  
+          #!/bin/bash 
+          sudo su,
+          sudo yum update -y,
+          sudo yum install httpd -y,
+          systemctl start httpd,
+          systemctl enable httpd, 
+          echo "emidinho did this from cloudformation" >> /var/www/html/index.html.
+
+  mybuc:
+    Type: 'AWS::S3::Bucket'
+    Properties: 
+      AccessControl: Private 
+      BucketName: emi-buc-buc
+      Tags:
+        - Key: Name
+          Value: emi-buc-buc
+
+
+#SecurityGroupEgress: 
+#        - IpProtocol: tcp
+#          FromPort: 22
+#          ToPort: 22
+#          CidrIp: 0.0.0.0/0
+#        - IpProtocol: tcp
+#          FromPort: 80
+#          ToPort: 80
+#          CidrIp: 0.0.0.0/0
+#        - IpProtocol: tcp
+#          FromPort: 443
+#          ToPort: 443
+#          CidrIp: 0.0.0.0/0
