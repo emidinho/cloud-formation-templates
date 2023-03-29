@@ -85,12 +85,12 @@ Resources:
       UserData: 
         Fn::Base64: 
           #!/bin/bash
-          sudo su,
-          sudo yum update -y,
-          sudo yum install httpd -y,
-          systemctl start httpd,
-          systemctl enable httpd, 
-          echo "emidinho did this from cloudformation" >> /var/www/html/index.html.
+          sudo su
+          yum update -y
+          yum install -y httpd.x86_64
+          systemctl start httpd.service
+          systemctl enable httpd.service
+          echo "emidinho did this from cloudformation " > /var/www/html/index.html
 
       Tags:
         - Key: Name

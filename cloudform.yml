@@ -89,13 +89,13 @@ Resources:
       Tenancy: "default"
       UserData: 
         Fn::Base64:  
-          #!/bin/bash 
-          sudo su,
-          sudo yum update -y,
-          sudo yum install httpd -y,
-          systemctl start httpd,
-          systemctl enable httpd, 
-          echo "emidinho did this from cloudformation" >> /var/www/html/index.html.
+          #!/bin/bash
+          sudo su
+          yum update -y
+          yum install -y httpd.x86_64
+          systemctl start httpd.service
+          systemctl enable httpd.service
+          echo "emidinho did this from cloudformation " > /var/www/html/index.html
 
   mybuc:
     Type: 'AWS::S3::Bucket'
@@ -105,18 +105,3 @@ Resources:
       Tags:
         - Key: Name
           Value: emi-buc-buc
-
-
-#SecurityGroupEgress: 
-#        - IpProtocol: tcp
-#          FromPort: 22
-#          ToPort: 22
-#          CidrIp: 0.0.0.0/0
-#        - IpProtocol: tcp
-#          FromPort: 80
-#          ToPort: 80
-#          CidrIp: 0.0.0.0/0
-#        - IpProtocol: tcp
-#          FromPort: 443
-#          ToPort: 443
-#          CidrIp: 0.0.0.0/0
