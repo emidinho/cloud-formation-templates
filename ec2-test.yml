@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: testing ec2 userdata
+
+Parameters:
+  AMIID:
+    Description: The EC2 AMI id found in ssm parameter store
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    ConstraintDescription: Must be a valid AMI based on the region
+
+Resources: 
+  myEC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      KeyName: linux-keypair
+      ImageId: 
+        Ref: AMIID
+      InstanceType: t2.micro
+      BlockDeviceMappings:
+      -
+       DeviceName: /dev/xvda
+       Ebs:
+        VolumeType: gp2
+        DeleteOnTermination: true
+        VolumeSize: 8      
+      UserData: 
+        Fn::Base64: 
+          #!/bin/bash
+          sudo su
+          yum update -y
+          yum install -y httpd.x86_64
+          systemctl start httpd.service
+          systemctl enable httpd.service
+          echo "emidinho did this from cloudformation " > /var/www/html/index.html
+      Tags:
+        - Key: Name
+          Value: emidinho-WebInstance
+        - Key: CreatedBy
+          Value: emidinho
+          
