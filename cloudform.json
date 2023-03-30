@@ -1,6 +1,6 @@
 {
 "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "creating a vpc and 2 subnets",
+    "Description": "creating 1 vpc and 2 subnets in json",
     
     "Parameters": {
       "AZ": {
