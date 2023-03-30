@@ -23,17 +23,28 @@ Resources:
         DeleteOnTermination: true
         VolumeSize: 8      
       UserData: 
-        Fn::Base64: 
+        Fn::Base64: |
           #!/bin/bash
           sudo su
           yum update -y
           yum install -y httpd.x86_64
           systemctl start httpd.service
           systemctl enable httpd.service
-          echo "emidinho did this from cloudformation " > /var/www/html/index.html
+          wget -P ../../var/www/html https://s3.amazonaws.com/emidinho.net/index.html
       Tags:
         - Key: Name
           Value: emidinho-WebInstance
         - Key: CreatedBy
           Value: emidinho
-          
+Outputs:
+  WebsiteURL:
+    Description: URL for newly created myEC2Instance
+    Value: 
+      Fn::Join: 
+        - ''
+        - - 'http://'
+          - 
+            Fn::GetAtt: 
+              - myEC2Instance
+              - PublicDnsName    
+    
