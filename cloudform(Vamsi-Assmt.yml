@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: create vpc and all the required network resoures such as
+             vpc, 2 public subnets, 2 private subnets, public route table, 
+             private route table, NACLS, Internet gateway, Nat gateway (dont forget to delete later on)
+
+Resources: 
+  myvpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: "10.3.0.0/16"
+      EnableDnsHostnames: "true"
+      EnableDnsSupport: "true"
+      Tags: 
+        - Key: Name
+          Value: EmiVPC
+  
+  mysubnet0:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "us-east-1a"
+      CidrBlock: "10.3.1.0/24"
+      MapPublicIpOnLaunch: true
+      Tags: 
+        - Key: Name
+          Value: EmiSubnet1public
+      VpcId: 
+        Ref: myvpc
+  
+  mysubnet0.1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "us-east-1a"
+      CidrBlock: "10.3.2.0/24"
+      MapPublicIpOnLaunch: true
+      Tags: 
+        - Key: Name
+          Value: EmiSubnet1public
+      VpcId: 
+        Ref: myvpc
+
+  mysubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "us-east-1a"
+      CidrBlock: "10.3.3.0/24"
+      MapPublicIpOnLaunch: false
+      Tags: 
+        - Key: Name
+          Value: EmiSubnet1private
+      VpcId: 
+        Ref: myvpc 
+
+  mysubnet1.1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "us-east-1a"
+      CidrBlock: "10.3.3.0/24"
+      MapPublicIpOnLaunch: false
+      Tags: 
+        - Key: Name
+          Value: EmiSubnet1private
+      VpcId: 
+        Ref: myvpc      
+
+  mysg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allows SSH, HTTP & HTTPS to host instance" 
+      GroupName: "webserver-sg"
+      SecurityGroupIngress: 
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags: 
+        - Key: Name
+          Value: cf-instance-sg
+      VpcId: 
+        Ref: myvpc
+
+  

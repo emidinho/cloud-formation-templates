@@ -1,29 +1,35 @@
 {
 "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "",
+    "Description": "creating a vpc and 2 subnets",
     
     "Parameters": {
       "AZ": {
         "Description" : "list of existing Availability Zones in this region",
         "Type" : "AWS::EC2::AvailabilityZone::Name"
-      },
-      "VPC": {
-        "Description" : "list of existing Availability Zones in this region",
-        "Type" : "AWS::EC2::VPC::Id"
       }
     },
     
     "Resources": {
-        "subnet1": {
+      "name": {
+        "Type": "AWS::EC2::VPC",
+        "Properties": {
+          "CidrBlock": "10.5.0.0/16",
+          "Tags":[
+          { "Key": "Name", "Value":  "NEW-VPC" }
+          ]
+        }
+      },
+        
+      "subnet1": {
           "Type": "AWS::EC2::Subnet",
           "Properties": {
             "AvailabilityZone": 
             { "Ref": "AZ" }
             ,
             "VpcId": 
-            { "Ref": "VPC" }
+            { "Ref": "NEW-VPC" }
             ,
-            "CidrBlock": "172.31.31.172/24",
+            "CidrBlock": "10.5.0.0/24",
             "Tags":[
             { "Key": "Name", "Value":  "pubsubnet1" }
             ]
@@ -37,9 +43,9 @@
             { "Ref": "AZ" }
             ,
             "VpcId": 
-            { "Ref": "VPC" }
+            { "Ref": "NEW-VPC" }
             ,
-            "CidrBlock": "172.31.32.173/24",
+            "CidrBlock": "10.5.1.0/24",
             "Tags":[
             { "Key": "Name", "Value":  "privsubnet1" }
             ]

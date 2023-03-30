@@ -6,6 +6,10 @@ Parameters:
     Description: list of existing VPCs in this region
     Type: AWS::EC2::VPC::Id
 
+  AZ:
+    Description: list of existing Availability Zones in this region
+    Type: AWS::EC2::AvailabilityZone::Name  
+
   subnetpublic:  
     Description: select subnet from chosen VPC
     Type: AWS::EC2::Subnet::Id
@@ -30,9 +34,8 @@ Parameters:
       ConstraintDescription: must be a valid EC2 instance type.
  
   AMIID:
-    Description: The EC2 AMI id
-    Type: String  
-    Default: ami-04581fbf744a7d11f
+    Description: The EC2 AMI id found in ssm parameter store
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     ConstraintDescription: Must be a valid AMI based on the region
 
   VolumeSize:
@@ -75,6 +78,42 @@ Parameters:
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
 
 Resources: 
+  myvpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: "10.1.0.0/16"
+      EnableDnsHostnames: "true"
+      EnableDnsSupport: "true"
+      Tags: 
+        - Key: Name
+          Value: EMI-VPC
+  
+  mysubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: 
+        Ref: AZ
+      CidrBlock: "10.1.1.0/24"
+      MapPublicIpOnLaunch: true
+      Tags: 
+        - Key: Name
+          Value: EmiSubnet1public
+      VpcId: 
+        Ref: myvpc
+
+  mysubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: 
+        Ref: AZ
+      CidrBlock: "10.1.2.0/24"
+      MapPublicIpOnLaunch: false
+      Tags: 
+        - Key: Name
+          Value: EmiSubnet1private
+      VpcId: 
+        Ref: myvpc
+
   InstanceSecGroupName:
     Type: AWS::EC2::SecurityGroup
     Properties:
