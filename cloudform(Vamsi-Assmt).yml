@@ -3,6 +3,34 @@ Description: create vpc and all the required network resoures such as
              vpc, 2 public subnets, 2 private subnets, public route table, 
              private route table, NACLS & SG, Internet gateway, Nat gateway(with EIP) and ec2 WebServer.
              (dont forget to delete later on)
+
+Metadata: 
+  AWS::CloudFormation::Interface: 
+    ParameterGroups: 
+      - 
+        Label: 
+          default: "VPC CIDR"
+        Parameters: 
+          - vpcCIDRblock
+
+      - 
+        Label: 
+          default: "Subnet CIDRs"
+        Parameters: 
+          - PublicSubnet1CIDR
+          - PublicSubnet2CIDR
+          - PrivateSubnet1CIDR
+          - PrivateSubnet2CIDR
+
+      - 
+        Label: 
+          default: "SSH & HTTP CIDRs for NACL & SG"
+        Parameters: 
+          - IpSourceNACLsinboundSSH
+          - IpSourceNACLsinboundHTTP
+          - IpSourceSGSSH
+          - IpSourceSGHTTP
+
 Parameters:
   PublicSubnet1AZ:
     Description: list of existing Availability Zones in this region
@@ -20,7 +48,7 @@ Parameters:
   SecurityGroupPortSSH:
     Description: Simple Description of a Number Parameter
     Type: Number
-  IpSourceSG-SSH:
+  IpSourceSGSSH:
     Description: The IP address range that can be used to SSH to the EC2 instances
     Type: String
     MinLength: '5'
@@ -32,7 +60,7 @@ Parameters:
   SecurityGroupPortHTTP:
     Description: Simple Description of a Number Parameter
     Type: Number
-  IpSourceSG-HTTP:
+  IpSourceSGHTTP:
     Description: The IP address range that can be used to SSH to the EC2 instances
     Type: String
     MinLength: '5'
@@ -79,7 +107,7 @@ Parameters:
     Type: String
     MinLength: '5'
     MaxLength: '18'
-    Default: 10.3.0.0/16
+    Default: 10.0.0.0/16
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   PublicSubnet1CIDR:
@@ -87,7 +115,7 @@ Parameters:
     Type: String
     MinLength: '5'
     MaxLength: '18'
-    Default: 10.3.1.0/24
+    Default: 10.0.0.0/24
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   PublicSubnet2CIDR:
@@ -95,7 +123,7 @@ Parameters:
     Type: String
     MinLength: '5'
     MaxLength: '18'
-    Default: 10.3.2.0/24
+    Default: 10.0.1.0/24
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   PrivateSubnet1CIDR:
@@ -103,7 +131,7 @@ Parameters:
     Type: String
     MinLength: '5'
     MaxLength: '18'
-    Default: 10.3.3.0/24
+    Default: 10.0.2.0/24
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
   PrivateSubnet2CIDR:
@@ -111,10 +139,10 @@ Parameters:
     Type: String
     MinLength: '5'
     MaxLength: '18'
-    Default: 10.3.4.0/24
+    Default: 10.0.3.0/24
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
-  IpSourceNACLs-inboundSSH:
+  IpSourceNACLsinboundSSH:
     Description: CIDR range to be allowed by NACL for SSH
     Type: String
     MinLength: '5'
@@ -122,8 +150,8 @@ Parameters:
     Default: 0.0.0.0/0
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.  
-  IpSourceNACLs-inboundHTTP:
-    Description: CIDR range to be allowed by NACL for SSH
+  IpSourceNACLsinboundHTTP:
+    Description: CIDR range to be allowed by NACL for HTTP
     Type: String
     MinLength: '5'
     MaxLength: '18'
@@ -139,10 +167,7 @@ Resources:
         Ref: vpcCIDRblock
       EnableDnsHostnames: "true"
       EnableDnsSupport: "true"
-      Tags: 
-        - Key: Name
-          Value: Emi-VPC
-  
+      
   PracticeIGW:
     Type: AWS::EC2::InternetGateway
     Properties:
@@ -155,21 +180,13 @@ Resources:
       VpcId: 
         Ref: myvpc
       InternetGatewayId: 
-        Ref: practiceIGW
+        Ref: PracticeIGW
   NatGateway:
     Type: AWS::EC2::NatGateway
     Properties: 
-      AllocationId: NATGatewayEIP
-      ConnectivityType: public
+      ConnectivityType: private
       SubnetId: 
         Ref: PublicSubnet2
-      Tags: 
-        - Key: Name
-          Value: My-Nat-Gatway
-  NATGatewayEIP:
-    Type: AWS::EC2::EIP
-    Properties:
-        Domain: vpc
 
   PublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -179,9 +196,6 @@ Resources:
       CidrBlock: 
         Ref: PublicSubnet1CIDR
       MapPublicIpOnLaunch: true
-      Tags: 
-        - Key: Name
-          Value: PublicSubnet-1
       VpcId: 
         Ref: myvpc  
   PublicSubnet2:
@@ -192,9 +206,6 @@ Resources:
       CidrBlock: 
         Ref: PublicSubnet2CIDR
       MapPublicIpOnLaunch: true
-      Tags: 
-        - Key: Name
-          Value: PublicSubnet-2
       VpcId: 
         Ref: myvpc
 
@@ -202,22 +213,20 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: 
-        ref: myvpc
-      Tags:
-        - Key: Name
-          Value: Public-Route-Table
+        Ref: myvpc
+      
   PublicRouteTableAssocSubnet1:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: 
-        ref: PublicSubnet1
+        Ref: PublicSubnet1
       RouteTableId:
         Ref: PublicRouteTable  
   PublicRouteTableAssocSubnet2:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: 
-        ref: PublicSubnet2
+        Ref: PublicSubnet2
       RouteTableId:
         Ref: PublicRouteTable
   PublicRoutes:
@@ -237,9 +246,6 @@ Resources:
       CidrBlock: 
         Ref: PrivateSubnet1CIDR
       MapPublicIpOnLaunch: false
-      Tags: 
-        - Key: Name
-          Value: PrivateSubnet-1
       VpcId: 
         Ref: myvpc 
   PrivateSubnet2:
@@ -250,9 +256,6 @@ Resources:
       CidrBlock: 
         Ref: PrivateSubnet1CIDR
       MapPublicIpOnLaunch: false
-      Tags: 
-        - Key: Name
-          Value: PrivateSubnet-1
       VpcId: 
         Ref: myvpc      
   
@@ -261,9 +264,7 @@ Resources:
     Properties:
       VpcId: 
         Ref: myvpc
-      Tags:
-        - Key: Name
-          Value: Private-Route-Table
+      
   PrivateRouteTableAssocSubnet1:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -290,18 +291,15 @@ Resources:
 
   NACLs:
     Type: AWS::EC2::NetworkAcl
-  Properties: 
-    Tags: 
-      - Key: Name
-        Value: my-first-cf-nacl
-    VpcId: 
-      Ref: myvpc 
+    Properties: 
+      VpcId: 
+        Ref: myvpc 
   NAClsInboundSSH:
     Type: AWS::EC2::NetworkAclEntry
     Properties: 
       RuleAction: allow
       CidrBlock: 
-        Ref: IpSourceNACLs-inboundSSH
+        Ref: IpSourceNACLsinboundSSH
       Protocol: 6
       PortRange: 
         From: 22
@@ -325,7 +323,7 @@ Resources:
     Properties: 
       RuleAction: allow
       CidrBlock: 
-        Ref: IpSourceNACLs-inboundHTTP
+        Ref: IpSourceNACLsinboundHTTP
       Protocol: 6
       PortRange: 
         From: 80
@@ -358,17 +356,14 @@ Resources:
           ToPort: 
             Ref: SecurityGroupPortSSH
           CidrIp: 
-            Ref: IpSourceSG-SSH
+            Ref: IpSourceSGSSH
         - IpProtocol: tcp
           FromPort: 
             Ref: SecurityGroupPortHTTP
           ToPort: 
             Ref: SecurityGroupPortHTTP
           CidrIp: 
-            Ref: IpSourceSG-HTTP  
-      Tags:
-        - Key: Name
-          Value: WebInstance-sg
+            Ref: IpSourceSGHTTP  
 
   myEC2Instance:
     Type: "AWS::EC2::Instance"
@@ -400,7 +395,6 @@ Resources:
           systemctl start httpd.service
           systemctl enable httpd.service
           wget -P ../../var/www/html https://s3.amazonaws.com/emidinho.net/index.html
-
       Tags:
         - Key: Name
           Value: emidinho-WebInstance
