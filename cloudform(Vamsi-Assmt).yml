@@ -49,7 +49,7 @@ Parameters:
     Description: Simple Description of a Number Parameter
     Type: Number
   IpSourceSGSSH:
-    Description: The IP address range that can be used to SSH to the EC2 instances
+    Description: IP address range allowed by SG to SSH into the EC2 instances
     Type: String
     MinLength: '5'
     MaxLength: '18'
@@ -61,7 +61,7 @@ Parameters:
     Description: Simple Description of a Number Parameter
     Type: Number
   IpSourceSGHTTP:
-    Description: The IP address range that can be used to SSH to the EC2 instances
+    Description: IP address range allowed by SG to pass via HTTP  into the EC2 instances
     Type: String
     MinLength: '5'
     MaxLength: '18'
