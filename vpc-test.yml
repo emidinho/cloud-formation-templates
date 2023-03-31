@@ -5,8 +5,7 @@ Resources:
   myvpc:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 
-        Ref: 10.0.0.0/16
+      CidrBlock: 10.0.0.0/16
       EnableDnsHostnames: "true"
       EnableDnsSupport: "true"
 
@@ -79,4 +78,3 @@ Outputs:
       Name: Fn::sub ${AWS-StackName}-PrivateSubnet2
     Value: 
       Ref: PrivateSubnet2     
-      
