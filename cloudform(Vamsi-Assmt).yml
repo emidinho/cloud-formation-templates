@@ -160,7 +160,7 @@ Parameters:
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
 
 Resources: 
-  myvpc:
+  VPC:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: 
@@ -178,7 +178,7 @@ Resources:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: 
-        Ref: myvpc
+        Ref: VPC
       InternetGatewayId: 
         Ref: PracticeIGW
   NatGateway:
@@ -197,7 +197,7 @@ Resources:
         Ref: PublicSubnet1CIDR
       MapPublicIpOnLaunch: true
       VpcId: 
-        Ref: myvpc  
+        Ref: VPC  
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
@@ -207,14 +207,13 @@ Resources:
         Ref: PublicSubnet2CIDR
       MapPublicIpOnLaunch: true
       VpcId: 
-        Ref: myvpc
+        Ref: VPC
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: 
-        Ref: myvpc
-      
+        Ref: VPC
   PublicRouteTableAssocSubnet1:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -247,24 +246,23 @@ Resources:
         Ref: PrivateSubnet1CIDR
       MapPublicIpOnLaunch: false
       VpcId: 
-        Ref: myvpc 
+        Ref: VPC 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: 
         Ref: PrivateSubnet2AZ
       CidrBlock: 
-        Ref: PrivateSubnet1CIDR
+        Ref: PrivateSubnet2CIDR
       MapPublicIpOnLaunch: false
       VpcId: 
-        Ref: myvpc      
+        Ref: VPC    
   
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: 
-        Ref: myvpc
-      
+        Ref: VPC
   PrivateRouteTableAssocSubnet1:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -293,7 +291,7 @@ Resources:
     Type: AWS::EC2::NetworkAcl
     Properties: 
       VpcId: 
-        Ref: myvpc 
+        Ref: VPC
   NAClsInboundSSH:
     Type: AWS::EC2::NetworkAclEntry
     Properties: 
@@ -348,7 +346,7 @@ Resources:
       GroupName: WebInstance-sg
       GroupDescription: allows http and ssh to instance
       VpcId:
-        Ref: myvpc
+        Ref: VPC
       SecurityGroupIngress: 
         - IpProtocol: tcp
           FromPort: 
