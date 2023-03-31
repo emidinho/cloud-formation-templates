@@ -1,89 +1,426 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: create vpc and all the required network resoures such as
              vpc, 2 public subnets, 2 private subnets, public route table, 
-             private route table, NACLS, Internet gateway, Nat gateway (dont forget to delete later on)
+             private route table, NACLS & SG, Internet gateway, Nat gateway(with EIP) and ec2 WebServer.
+             (dont forget to delete later on)
+Parameters:
+  PublicSubnet1AZ:
+    Description: list of existing Availability Zones in this region
+    Type: AWS::EC2::AvailabilityZone::Name
+  PublicSubnet2AZ:
+    Description: list of existing Availability Zones in this region
+    Type: AWS::EC2::AvailabilityZone::Name
+  PrivateSubnet1AZ:
+    Description: list of existing Availability Zones in this region
+    Type: AWS::EC2::AvailabilityZone::Name
+  PrivateSubnet2AZ:  
+    Description: list of existing Availability Zones in this region
+    Type: AWS::EC2::AvailabilityZone::Name
+  
+  SecurityGroupPortSSH:
+    Description: Simple Description of a Number Parameter
+    Type: Number
+  IpSourceSG-SSH:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: '5'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
+  SecurityGroupPortHTTP:
+    Description: Simple Description of a Number Parameter
+    Type: Number
+  IpSourceSG-HTTP:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: '5'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
+  InstanceType:
+      Description: WebServer EC2 instance type
+      Type: String
+      Default: t2.micro
+      AllowedValues:
+      - t1.micro
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.medium
+      ConstraintDescription: must be a valid EC2 instance type.
+
+  AMIID:
+    Description: The EC2 AMI id found in ssm parameter store
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    ConstraintDescription: Must be a valid AMI based on the region
+
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+
+  VolumeSize:
+    Description: EBS Volume size
+    Type: Number
+    Default: 8
+    MinValue: 8
+    MaxValue: 100
+    ConstraintDescription: must be a number between 8 to 100 Gb        
+
+  vpcCIDRblock:
+    Description: CIDR range for the created custom VPC
+    Type: String
+    MinLength: '5'
+    MaxLength: '18'
+    Default: 10.3.0.0/16
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  PublicSubnet1CIDR:
+    Description: CIDR range for the created custom PublicSubnet1
+    Type: String
+    MinLength: '5'
+    MaxLength: '18'
+    Default: 10.3.1.0/24
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  PublicSubnet2CIDR:
+    Description: CIDR range for the created custom PublicSubnet2
+    Type: String
+    MinLength: '5'
+    MaxLength: '18'
+    Default: 10.3.2.0/24
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  PrivateSubnet1CIDR:
+    Description: CIDR range for the created custom PrivateSubnet1
+    Type: String
+    MinLength: '5'
+    MaxLength: '18'
+    Default: 10.3.3.0/24
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  PrivateSubnet2CIDR:
+    Description: CIDR range for the created custom PrivateSubnet2
+    Type: String
+    MinLength: '5'
+    MaxLength: '18'
+    Default: 10.3.4.0/24
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  IpSourceNACLs-inboundSSH:
+    Description: CIDR range to be allowed by NACL for SSH
+    Type: String
+    MinLength: '5'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.  
+  IpSourceNACLs-inboundHTTP:
+    Description: CIDR range to be allowed by NACL for SSH
+    Type: String
+    MinLength: '5'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
 
 Resources: 
   myvpc:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: "10.3.0.0/16"
+      CidrBlock: 
+        Ref: vpcCIDRblock
       EnableDnsHostnames: "true"
       EnableDnsSupport: "true"
       Tags: 
         - Key: Name
-          Value: EmiVPC
+          Value: Emi-VPC
   
-  mysubnet0:
-    Type: AWS::EC2::Subnet
+  PracticeIGW:
+    Type: AWS::EC2::InternetGateway
     Properties:
-      AvailabilityZone: "us-east-1a"
-      CidrBlock: "10.3.1.0/24"
-      MapPublicIpOnLaunch: true
-      Tags: 
+      Tags:
         - Key: Name
-          Value: EmiSubnet1public
+          Value: Practice-IGW
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
       VpcId: 
         Ref: myvpc
-  
-  mysubnet0.1:
+      InternetGatewayId: 
+        Ref: practiceIGW
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties: 
+      AllocationId: NATGatewayEIP
+      ConnectivityType: public
+      SubnetId: 
+        Ref: PublicSubnet2
+      Tags: 
+        - Key: Name
+          Value: My-Nat-Gatway
+  NATGatewayEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+        Domain: vpc
+
+  PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZone: "us-east-1a"
-      CidrBlock: "10.3.2.0/24"
+      AvailabilityZone: 
+        Ref: PublicSubnet1AZ
+      CidrBlock: 
+        Ref: PublicSubnet1CIDR
       MapPublicIpOnLaunch: true
       Tags: 
         - Key: Name
-          Value: EmiSubnet1public
+          Value: PublicSubnet-1
+      VpcId: 
+        Ref: myvpc  
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: 
+        Ref: PublicSubnet2AZ
+      CidrBlock: 
+        Ref: PublicSubnet2CIDR
+      MapPublicIpOnLaunch: true
+      Tags: 
+        - Key: Name
+          Value: PublicSubnet-2
       VpcId: 
         Ref: myvpc
 
-  mysubnet1:
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: 
+        ref: myvpc
+      Tags:
+        - Key: Name
+          Value: Public-Route-Table
+  PublicRouteTableAssocSubnet1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: 
+        ref: PublicSubnet1
+      RouteTableId:
+        Ref: PublicRouteTable  
+  PublicRouteTableAssocSubnet2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: 
+        ref: PublicSubnet2
+      RouteTableId:
+        Ref: PublicRouteTable
+  PublicRoutes:
+    Type: AWS::EC2::Route
+    Properties: 
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: 
+        Ref: PracticeIGW
+      RouteTableId: 
+        Ref: PublicRouteTable
+
+  PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZone: "us-east-1a"
-      CidrBlock: "10.3.3.0/24"
+      AvailabilityZone: 
+        Ref: PrivateSubnet1AZ
+      CidrBlock: 
+        Ref: PrivateSubnet1CIDR
       MapPublicIpOnLaunch: false
       Tags: 
         - Key: Name
-          Value: EmiSubnet1private
+          Value: PrivateSubnet-1
       VpcId: 
         Ref: myvpc 
-
-  mysubnet1.1:
+  PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZone: "us-east-1a"
-      CidrBlock: "10.3.3.0/24"
+      AvailabilityZone: 
+        Ref: PrivateSubnet2AZ
+      CidrBlock: 
+        Ref: PrivateSubnet1CIDR
       MapPublicIpOnLaunch: false
       Tags: 
         - Key: Name
-          Value: EmiSubnet1private
+          Value: PrivateSubnet-1
       VpcId: 
         Ref: myvpc      
-
-  mysg:
-    Type: AWS::EC2::SecurityGroup
+  
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
     Properties:
-      GroupDescription: "Allows SSH, HTTP & HTTPS to host instance" 
-      GroupName: "webserver-sg"
-      SecurityGroupIngress: 
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-      Tags: 
-        - Key: Name
-          Value: cf-instance-sg
       VpcId: 
         Ref: myvpc
+      Tags:
+        - Key: Name
+          Value: Private-Route-Table
+  PrivateRouteTableAssocSubnet1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: 
+        Ref: PrivateSubnet1
+      RouteTableId: 
+        Ref: PrivateRouteTable
+  PrivateRouteTableAssocSubnet2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: 
+        Ref: PrivateSubnet2
+      RouteTableId: 
+        Ref: PrivateRouteTable
+  PrivateRoutes:
+    Type: AWS::EC2::Route
+    Properties: 
+      DependOn: NatGateway
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: NatGateway
+      RouteTableId: 
+        Ref: PrivateRouteTable
 
-  
+  NACLs:
+    Type: AWS::EC2::NetworkAcl
+  Properties: 
+    Tags: 
+      - Key: Name
+        Value: my-first-cf-nacl
+    VpcId: 
+      Ref: myvpc 
+  NAClsInboundSSH:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties: 
+      RuleAction: allow
+      CidrBlock: 
+        Ref: IpSourceNACLs-inboundSSH
+      Protocol: 6
+      PortRange: 
+        From: 22
+        To: 22
+      Egress: false
+      NetworkAclId: 
+        Ref: NACLs
+      RuleNumber: 99
+  NAClsOutboundSSH:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties: 
+      RuleAction: allow
+      CidrBlock: 0.0.0.0/0
+      Protocol: -1
+      Egress: true
+      NetworkAclId: 
+        Ref: NACLs
+      RuleNumber: 99  
+  NAClsInboundHTTP:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties: 
+      RuleAction: allow
+      CidrBlock: 
+        Ref: IpSourceNACLs-inboundHTTP
+      Protocol: 6
+      PortRange: 
+        From: 80
+        To: 80
+      Egress: false
+      NetworkAclId: 
+        Ref: NACLs
+      RuleNumber: 100
+  NAClsOutboundHTTP:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties: 
+      RuleAction: allow
+      CidrBlock: 0.0.0.0/0
+      Protocol: -1
+      Egress: true
+      NetworkAclId: 
+        Ref: NACLs
+      RuleNumber: 100
+  InstanceSecGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: WebInstance-sg
+      GroupDescription: allows http and ssh to instance
+      VpcId:
+        Ref: myvpc
+      SecurityGroupIngress: 
+        - IpProtocol: tcp
+          FromPort: 
+            Ref: SecurityGroupPortSSH
+          ToPort: 
+            Ref: SecurityGroupPortSSH
+          CidrIp: 
+            Ref: IpSourceSG-SSH
+        - IpProtocol: tcp
+          FromPort: 
+            Ref: SecurityGroupPortHTTP
+          ToPort: 
+            Ref: SecurityGroupPortHTTP
+          CidrIp: 
+            Ref: IpSourceSG-HTTP  
+      Tags:
+        - Key: Name
+          Value: WebInstance-sg
+
+  myEC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      KeyName: 
+        Ref: KeyName
+      ImageId: 
+        Ref: AMIID
+      InstanceType: 
+        Ref: InstanceType
+      BlockDeviceMappings:
+      -
+       DeviceName: /dev/xvda
+       Ebs:
+        VolumeType: gp2
+        DeleteOnTermination: true
+        VolumeSize: 
+          Ref: VolumeSize
+      SecurityGroupIds:
+        - Ref: InstanceSecGroup
+      SubnetId: 
+        Ref: PublicSubnet1
+      UserData: 
+        Fn::Base64: |
+          #!/bin/bash
+          sudo su
+          yum update -y
+          yum install -y httpd.x86_64
+          systemctl start httpd.service
+          systemctl enable httpd.service
+          wget -P ../../var/www/html https://s3.amazonaws.com/emidinho.net/index.html
+
+      Tags:
+        - Key: Name
+          Value: emidinho-WebInstance
+        - Key: CreatedBy
+          Value: emidinho 
+
+Outputs:
+  WebsiteURL:
+    Description: URL for newly created myEC2Instance
+    Value: 
+      Fn::Join: 
+        - ''
+        - - 'http://'
+          - 
+            Fn::GetAtt: 
+              - myEC2Instance
+              - PublicDnsName    
+  PublicIP:
+    Description: Public IP address of the newly created EC2 instance
+    Value: 
+      Fn::GetAtt: 
+        - myEC2Instance
+        - PublicIp
