@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: creating an elastic IP in AWS using cf
+
+Resources: 
+  myEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Tags:
+        - Key: Name
+          Value: NewEIP
+Outputs:
+  EIP:
+    Description: newly created EIP Address
+    Value: 
+      Ref: myEIP
+    Export:
+      Name: EIP Address
