@@ -46,10 +46,28 @@ Outputs:
           - 
             Fn::GetAtt: 
               - myEC2Instance
-              - PublicDnsName    
+              - PublicDnsName  
+    Export:
+      Name: InstancePublicDNS            
   PublicIP:
     Description: Public IP address of the newly created EC2 instance
     Value: 
       Fn::GetAtt: 
         - myEC2Instance
         - PublicIp  
+    Export:
+      Name: InstancePublicIP    
+  PrivateIP:
+    Description: Private IP address of the newly created EC2 instance
+    Value: 
+      Fn::GetAtt: 
+        - myEC2Instance
+        - PrivateIp
+    Export:
+      Name: InstancePrivateIP
+  InstanceID:
+    Description: InstanceID of the newly created EC2 instance
+    Value: 
+      Ref: myEC2Instance
+    Export:
+      Name: InstanceID    
