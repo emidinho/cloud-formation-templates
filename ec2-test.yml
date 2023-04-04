@@ -36,6 +36,14 @@ Resources:
           Value: emidinho-WebInstance
         - Key: CreatedBy
           Value: emidinho
+
+  eipName:
+    Type: AWS::EC2::EIPAssociation
+    Properties: 
+      EIP: Fn::ImportValue EIP-Address
+      InstanceId: 
+        Ref: myEC2Instance
+
 Outputs:
   WebsiteURL:
     Description: URL for newly created myEC2Instance
