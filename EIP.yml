@@ -14,4 +14,4 @@ Outputs:
     Value: 
       Ref: myEIP
     Export:
-      Name: EIP Address
+      Name: EIP-Address
