@@ -40,7 +40,7 @@ Resources:
   eipName:
     Type: AWS::EC2::EIPAssociation
     Properties: 
-      EIP: Fn::ImportValue EIP-Address
+      EIP: Fn::ImportValue EIPAddress
       InstanceId: 
         Ref: myEC2Instance
 
