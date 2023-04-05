@@ -2,6 +2,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: testing ec2 userdata
 
 Parameters:
+  
   AMIID:
     Description: The EC2 AMI id found in ssm parameter store
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
@@ -53,4 +54,4 @@ Outputs:
       Fn::GetAtt: 
         - myEC2Instance
         - PublicIp  
-        
+  
