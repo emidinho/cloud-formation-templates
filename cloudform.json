@@ -10,7 +10,7 @@
     },
     
     "Resources": {
-      "name": {
+      "VPC": {
         "Type": "AWS::EC2::VPC",
         "Properties": {
           "CidrBlock": "10.5.0.0/16",
@@ -20,14 +20,14 @@
         }
       },
         
-      "subnet1": {
+      "pubsubnet1": {
           "Type": "AWS::EC2::Subnet",
           "Properties": {
             "AvailabilityZone": 
             { "Ref": "AZ" }
             ,
             "VpcId": 
-            { "Ref": "NEW-VPC" }
+            { "Ref": "VPC" }
             ,
             "CidrBlock": "10.5.0.0/24",
             "Tags":[
@@ -35,22 +35,76 @@
             ]
           }
         },
-        
-        "subnet2": {
-          "Type": "AWS::EC2::Subnet",
-          "Properties": {
-            "AvailabilityZone": 
-            { "Ref": "AZ" }
-            ,
-            "VpcId": 
-            { "Ref": "NEW-VPC" }
-            ,
-            "CidrBlock": "10.5.1.0/24",
-            "Tags":[
-            { "Key": "Name", "Value":  "privsubnet1" }
-            ]
-          }
-        } 
-    }
-    
+      "pubsubnet2": {
+        "Type": "AWS::EC2::Subnet",
+        "Properties": {
+          "AvailabilityZone": 
+          { "Ref": "AZ" }
+          ,
+          "VpcId": 
+          { "Ref": "VPC" }
+          ,
+          "CidrBlock": "10.5.1.0/24",
+          "Tags":[
+          { "Key": "Name", "Value":  "pubsubnet2" }
+          ]
+        }
+      },  
+      "privsubnet1": {
+        "Type": "AWS::EC2::Subnet",
+        "Properties": {
+          "AvailabilityZone": 
+          { "Ref": "AZ" }
+          ,
+          "VpcId": 
+          { "Ref": "VPC" }
+          ,
+          "CidrBlock": "10.5.2.0/24",
+          "Tags":[
+          { "Key": "Name", "Value":  "privsubnet1" }
+          ]
+        }
+      },
+      "privsubnet2": {
+        "Type": "AWS::EC2::Subnet",
+        "Properties": {
+          "AvailabilityZone": 
+          { "Ref": "AZ" }
+          ,
+          "VpcId": 
+          { "Ref": "VPC" }
+          ,
+          "CidrBlock": "10.5.3.0/24",
+          "Tags":[
+          { "Key": "Name", "Value":  "privsubnet2" }
+          ]
+        }
+      },
+
+      "natGW": {
+        "Type": "AWS::EC2::NatGateway",
+        "Properties": {
+          "AllocationId": 
+          { "Ref": "myEIP" }
+          ,
+          "ConnectivityType": "public",
+          "SubnetId": 
+          { "Ref": "pubsubnet2" }
+          ,
+          "Tags":[
+            {"Key": "Name", "Value": "NewNatGW"}
+          ]
+        }
+      },
+      "myEIP": {
+        "Type": "AWS::EC2::EIP",
+        "Properties": {
+          "Domain": 
+          { "Ref": "VPC" },
+          "Tags":[
+          { "Key": "Name", "Value":  "EIP" }
+          ]
+        }
+      } 
+  }
 }
