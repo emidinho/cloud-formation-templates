@@ -1,9 +1,21 @@
 {
 "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "creating 1 vpc and 2 subnets in json",
+    "Description": "creating 1 vpc, 4 subnets(2pub & 2priv), 1 igw, 1 natgw and 1 eip in json",
     
     "Parameters": {
-      "AZ": {
+      "pubsubnet1AZ": {
+        "Description" : "list of existing Availability Zones in this region",
+        "Type" : "AWS::EC2::AvailabilityZone::Name"
+      },
+      "pubsubnet2AZ": {
+        "Description" : "list of existing Availability Zones in this region",
+        "Type" : "AWS::EC2::AvailabilityZone::Name"
+      },
+      "privsubnet1AZ": {
+        "Description" : "list of existing Availability Zones in this region",
+        "Type" : "AWS::EC2::AvailabilityZone::Name"
+      },
+      "privsubnet2AZ": {
         "Description" : "list of existing Availability Zones in this region",
         "Type" : "AWS::EC2::AvailabilityZone::Name"
       }
@@ -19,12 +31,29 @@
           ]
         }
       },
-        
+      
+      "IGW": {
+        "Type": "AWS::EC2::InternetGateway",
+        "Properties": {
+          "Tags":[
+            { "Key": "Name", "Value":  "myigw" }
+            ]
+        }
+      },
+      "AttachGateway": {
+        "Type": "AWS::EC2::VPCGatewayAttachment",
+        "Properties": {
+          "VpcId": 
+          { "Ref": "VPC" }
+          ,
+          "InternetGatewayId": { "Ref": "IGW" }
+        }
+      },
       "pubsubnet1": {
           "Type": "AWS::EC2::Subnet",
           "Properties": {
             "AvailabilityZone": 
-            { "Ref": "AZ" }
+            { "Ref": "pubsubnet1AZ" }
             ,
             "VpcId": 
             { "Ref": "VPC" }
@@ -39,7 +68,7 @@
         "Type": "AWS::EC2::Subnet",
         "Properties": {
           "AvailabilityZone": 
-          { "Ref": "AZ" }
+          { "Ref": "pubsubnet2AZ" }
           ,
           "VpcId": 
           { "Ref": "VPC" }
@@ -54,7 +83,7 @@
         "Type": "AWS::EC2::Subnet",
         "Properties": {
           "AvailabilityZone": 
-          { "Ref": "AZ" }
+          { "Ref": "privsubnet1AZ" }
           ,
           "VpcId": 
           { "Ref": "VPC" }
@@ -69,7 +98,7 @@
         "Type": "AWS::EC2::Subnet",
         "Properties": {
           "AvailabilityZone": 
-          { "Ref": "AZ" }
+          { "Ref": "privsubnet2AZ" }
           ,
           "VpcId": 
           { "Ref": "VPC" }
@@ -85,8 +114,7 @@
         "Type": "AWS::EC2::NatGateway",
         "Properties": {
           "AllocationId": 
-          { "Ref": "myEIP" }
-          ,
+          { "Fn::GetAtt": ["myEIP", "AllocationId"] },
           "ConnectivityType": "public",
           "SubnetId": 
           { "Ref": "pubsubnet2" }
