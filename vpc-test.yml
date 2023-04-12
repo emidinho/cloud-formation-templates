@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: testing to findout if subnet cidrs will conflicts
+Description: creating the networking architecture
 
 Resources: 
   VPC:

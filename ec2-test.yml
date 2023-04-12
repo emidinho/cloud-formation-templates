@@ -2,27 +2,48 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: testing ec2 userdata
 
 Parameters:
-  
-  AMIID:
-    Description: The EC2 AMI id found in ssm parameter store
-    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    ConstraintDescription: Must be a valid AMI based on the region
+  InstanceType:
+      Description: WebServer EC2 instance type
+      Type: String
+      Default: t2.micro
+      AllowedValues:
+      - t1.micro
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.medium
+      ConstraintDescription: must be a valid EC2 instance type
+
+  PubSubnetID:
+    Description: The EC2 subnet id
+    Type: String   
+
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
 
 Resources: 
   myEC2Instance:
     Type: "AWS::EC2::Instance"
     Properties:
-      KeyName: linux-keypair
-      ImageId: 
-        Ref: AMIID
-      InstanceType: t2.micro
+      KeyName: 
+        Ref: KeyName
+      ImageId: ami-0fa1de1d60de6a97e
+      InstanceType: 
+        Ref: InstanceType
       BlockDeviceMappings:
       -
        DeviceName: /dev/xvda
        Ebs:
         VolumeType: gp2
         DeleteOnTermination: true
-        VolumeSize: 8      
+        VolumeSize: 8    
+      SubnetId: 
+        Ref: PubSubnetID    
       UserData: 
         Fn::Base64: |
           #!/bin/bash
@@ -37,14 +58,6 @@ Resources:
           Value: emidinho-WebInstance
         - Key: CreatedBy
           Value: emidinho
-
-  eipName:
-    Type: AWS::EC2::EIPAssociation
-    Properties: 
-      EIP: 
-        Fn::ImportValue: EIP-Address
-      InstanceId: 
-        Ref: myEC2Instance
 
 Outputs:
   WebsiteURL:

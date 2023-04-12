@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: creating cf nested stacks
+
+Parameters: 
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+    - t1.micro
+    - t2.nano
+    - t2.micro
+    - t2.small
+    - t2.medium
+    - t2.large
+    - m1.small
+    - m1.medium
+    ConstraintDescription: must be a valid EC2 instance type
+  
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair. 
+
+Resources:
+  StackForNetworking:
+    Type: AWS::CloudFormation::Stack
+    Properties:         
+      TemplateURL: https://emidiobucket.s3.amazonaws.com/vpc-test.yml
+      Tags: 
+        - Key: Name
+          Value: Networking-Stack
+
+  StackForEC2:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        KeyName: 
+          Ref: KeyName
+        InstanceType: 
+          Ref: InstanceType   
+        PubSubnetID: 
+          Fn::GetAtt: StackForNetworking.Outputs.PublicSubnet1  
+      TemplateURL: https://emidiobucket.s3.amazonaws.com/ec2-test.yml
+      Tags: 
+        - Key: Name
+          Value: EC2-Stack
+    DependsOn: StackForNetworking
+      
